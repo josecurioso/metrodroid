@@ -35,11 +35,10 @@ import au.id.micolous.metrodroid.card.desfire.files.DesfireFile;
 import au.id.micolous.metrodroid.card.desfire.files.InvalidDesfireFile;
 import au.id.micolous.metrodroid.card.desfire.files.RecordDesfireFile;
 import au.id.micolous.metrodroid.card.desfire.settings.DesfireFileSettings;
-import au.id.micolous.metrodroid.transit.suica.SuicaDBUtil;
 import au.id.micolous.metrodroid.card.ultralight.UltralightPage;
 import au.id.micolous.metrodroid.transit.lax_tap.LaxTapDBUtil;
-import au.id.micolous.metrodroid.transit.ovc.OVChipDBUtil;
 import au.id.micolous.metrodroid.transit.seq_go.SeqGoDBUtil;
+import au.id.micolous.metrodroid.util.StationTableReader;
 import au.id.micolous.metrodroid.xml.Base64String;
 import au.id.micolous.metrodroid.xml.CardConverter;
 import au.id.micolous.metrodroid.xml.CardTypeTransform;
@@ -85,10 +84,13 @@ public class MetrodroidApplication extends Application {
 
     private static MetrodroidApplication sInstance;
 
-    private SuicaDBUtil mSuicaDBUtil;
-    private OVChipDBUtil mOVChipDBUtil;
     private SeqGoDBUtil mSeqGoDBUtil;
     private LaxTapDBUtil mLaxTapDBUtil;
+
+    private StationTableReader mSuicaRailSTR = null;
+    private StationTableReader mSuicaBusSTR = null;
+    private StationTableReader mOVChipSTR = null;
+
     private final Serializer mSerializer;
     private boolean mHasNfcHardware = false;
     private boolean mMifareClassicSupport = false;
@@ -96,8 +98,6 @@ public class MetrodroidApplication extends Application {
     public MetrodroidApplication() {
         sInstance = this;
 
-        mSuicaDBUtil = new SuicaDBUtil(this);
-        mOVChipDBUtil = new OVChipDBUtil(this);
         mSeqGoDBUtil = new SeqGoDBUtil(this);
         mLaxTapDBUtil = new LaxTapDBUtil(this);
 
@@ -173,14 +173,6 @@ public class MetrodroidApplication extends Application {
         return getBooleanPref(PREF_OBFUSCATE_BALANCE, false);
     }
 
-    public SuicaDBUtil getSuicaDBUtil() {
-        return mSuicaDBUtil;
-    }
-
-    public OVChipDBUtil getOVChipDBUtil() {
-        return mOVChipDBUtil;
-    }
-
     public SeqGoDBUtil getSeqGoDBUtil() {
         return mSeqGoDBUtil;
     }
@@ -195,6 +187,42 @@ public class MetrodroidApplication extends Application {
 
     public boolean getMifareClassicSupport() {
         return mMifareClassicSupport;
+    }
+
+    public StationTableReader getSuicaRailSTR() {
+        if (mSuicaRailSTR == null) {
+            try {
+                mSuicaRailSTR = new StationTableReader(this, "suica_rail.mdst");
+            } catch (Exception e) {
+                Log.w(TAG, "Couldn't open suica_rail", e);
+            }
+        }
+
+        return mSuicaRailSTR;
+    }
+
+    public StationTableReader getSuicaBusSTR() {
+        if (mSuicaBusSTR == null) {
+            try {
+                mSuicaBusSTR = new StationTableReader(this, "suica_bus.mdst");
+            } catch (Exception e) {
+                Log.w(TAG, "Couldn't open suica_bus", e);
+            }
+        }
+
+        return mSuicaBusSTR;
+    }
+
+    public StationTableReader getOVChipSTR() {
+        if (mOVChipSTR == null) {
+            try {
+                mOVChipSTR = new StationTableReader(this, "ovc.mdst");
+            } catch (Exception e) {
+                Log.w(TAG, "Couldn't open ovc", e);
+            }
+        }
+
+        return mOVChipSTR;
     }
 
     @Override
